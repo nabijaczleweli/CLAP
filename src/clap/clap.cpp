@@ -10,7 +10,7 @@ void tokenize(const std::string string, std::vector<std::string> &tokens) {
   std::string cur("");
   unsigned int i;
   for(i = 0; string[i]; i++) {
-    if(string[i]==' ' || string[i]=='\t' || string[i]=='\n') {
+    if(isspace(string[i])) {
       if(cur.length() > 0)
 	tokens.push_back(cur);
       cur = "";
@@ -27,15 +27,22 @@ void error_setup(const std::string errMsg) {
   exit(1);
 }
 
-bool is_white_space(char c) {
-  return c == ' ' || c == '\t' || c == '\n';
-}
-
 void trim(std::string &string) {
   unsigned int b = 0, e = string.length();
-  while(is_white_space(string[b])) b++;
-  while(is_white_space(string[e-1])) e--;
-  string = string.substr(b,e);
+  while(isspace(string[b])) b++;
+  while(isspace(string[e-1])) e--;
+  string = (e <= b ? "" : string.substr(b,e));
+}
+
+bool legal_name(const std::string name) {
+  unsigned int i;
+  // First must be alpha
+  if(name.length() == 0 || !isalpha(name[0]))
+    return false;
+  for(i = 1; i < name.length(); i++)
+    if(!isalnum(name[i]) && name[i] != '-' && name[i] != '_')
+      return false;
+  return true;
 }
 
 /////////////////////////////
@@ -164,7 +171,7 @@ CLAP::CLAP(const std::string info, int argc, char **argv) : exec_name(argv[0]) {
       case CLAP::Type::string_t:
 	p.val = new std::string(param);
 	break;
-      default: error_setup("Unknown type: '"+param+"'");
+      default: error_setup("CLAP::CLAP - Unknown type: '"+param+"'");
       }
     }
   }
@@ -328,13 +335,16 @@ CLAP::Option::Option(const std::string info) : is_set(false), do_break(false) {
   std::vector<std::string> tokens;
   unsigned int i;
   tokenize(info, tokens);
-  
+  if(tokens.size() < 2)
+    error_setup("Option::Option - missing long name");
+
+  if(tokens[0].length() < 2 || tokens[0][0] != '-' || !legal_name(tokens[0].substr(1)))
+    error_setup("Option::Option - error in short name '"+tokens[0]+"'");
+  if(tokens[1].length() < 3 || tokens[1][0] != '-'
+     || tokens[1][1] != '-' || !legal_name(tokens[1].substr(2)))
+    error_setup("Option::Option - error in long name '"+tokens[1]+"'");
   this->short_name = tokens[0].substr(1);
   this->name       = tokens[1].substr(2);
-  if(tokens[0][0] != '-' || !this->legal_name(this->name))
-    error_setup("Option::Option - error in short name '"+tokens[0]+"' - must start with '-'");
-  if(tokens[1][0] != '-' || tokens[1][1] != '-' || !this->legal_name(this->short_name))
-    error_setup("Option::Option - error in long name '"+tokens[0]+"' - must start with '--'");
   
   i = 2;
   if(tokens.size() > 2 && tokens[2] == "br") {
@@ -349,14 +359,11 @@ CLAP::Option::Option(const std::string info) : is_set(false), do_break(false) {
 
 CLAP::Option::~Option() { }
 
-bool CLAP::Option::legal_name(std::string name) {
-  // TODO
-  return true;
-}
-
 CLAP::Param::Param(const std::string info) {
   unsigned int l = info.length();
   this->name = info.substr(0,l-2);
+  if(!legal_name(this->name))
+    error_setup("Param::Param - invalid parameter name '"+name+"'");
   if(info[l-2] != ':')
     error_setup("Param::Param - parsing error, missing ':' in '"+info+"'");
   switch(info[l-1]) {
@@ -364,7 +371,7 @@ CLAP::Param::Param(const std::string info) {
   case 'f': this->t = CLAP::Type::float_t;  break;
   case 'b': this->t = CLAP::Type::bool_t;   break;
   case 's': this->t = CLAP::Type::string_t; break;
-  default: error_setup("Unknown type: '"+info+"'");
+  default: error_setup("Param::Param - Unknown type: '"+info+"'");
   }
   this->val = NULL;
 }

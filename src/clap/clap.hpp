@@ -46,7 +46,6 @@ private:
   struct Option {
     Option(const std::string info);
     ~Option();
-    bool legal_name(std::string name);
     std::string name;
     std::string short_name;
     bool is_set;
