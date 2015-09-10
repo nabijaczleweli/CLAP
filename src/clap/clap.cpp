@@ -71,6 +71,11 @@ CLAP::CLAP(const std::string info, int argc, char **argv) : exec_name(argv[0]) {
     lines.push_back(cur);
   }
 
+  // Only use the name part of exec_name
+  i = this->exec_name.length()-1;
+  while(i >= 0 && this->exec_name[i] != '/') {i--;}
+  this->exec_name = this->exec_name.substr(i+1);
+  
   // Check first line is correct
   if(lines[0] != "OPTIONS:")
     error_setup("CLAP::CLAP - missing OPTIONS section");
@@ -228,13 +233,19 @@ std::string CLAP::get_string_param(const std::string name, unsigned int index) {
 
 void CLAP::print_help() {
   unsigned int i, j;
-  std::cout << "Usage: " << this->exec_name << std::endl;
+  std::cout << "Usage: " << this->exec_name << " [Options]";
+  for(i = 0; i < this->params.size(); i++)
+    std::cout << " <" << this->params[i].name << ">";
+  std::cout << std::endl << std::endl;
+  
+  // Options
+  std::cout << "Options:" << std::endl;
   for(i = 0; i < this->options.size(); i++) {
-    std::cout << "-" << this->options[i].short_name
-	      << "\t--" << this->options[i].name
-	      << "\tParameters: ";
+    std::cout << " -" << this->options[i].short_name
+	      << "\t--" << this->options[i].name << " ";
     for(j = 0; j < this->options[i].params.size(); j++) {
-      std::cout << "(";
+      std::cout << this->options[i].params[j].name << " ";
+      /*std::cout << "(";
       switch(this->options[i].params[j].t) {
       case CLAP::Type::int_t:    std::cout << "integer";        break;
       case CLAP::Type::bool_t:   std::cout << "0|1";            break;
@@ -242,10 +253,9 @@ void CLAP::print_help() {
       case CLAP::Type::string_t: std::cout << "string";         break;
       default: break;
       }
-      std::cout << "), " << std::endl;
+      std::cout << "), " << std::endl;*/
     }
     std::cout << std::endl;
-    //printf("-%s\t--%s\n", this->options[i].short_name, this->options[i].name);
   }
 }
 
