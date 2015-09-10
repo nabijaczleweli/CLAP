@@ -6,6 +6,9 @@
 /////////////////////////////
 // Helper functions
 
+/*
+ * Tokenize a string (split by white space)
+ */
 void tokenize(const std::string string, std::vector<std::string> &tokens) {
   std::string cur("");
   unsigned int i;
@@ -22,11 +25,18 @@ void tokenize(const std::string string, std::vector<std::string> &tokens) {
     tokens.push_back(cur);
 }
 
+/*
+ * Displays error message and exits.
+ * To be used on setup error.
+ */
 void error_setup(const std::string errMsg) {
   std::cout << "CLAP setup error: " << errMsg << std::endl;
   exit(1);
 }
 
+/*
+ * Trips a string (removes leading and trailing white space)
+ */
 void trim(std::string &string) {
   unsigned int b = 0, e = string.length();
   while(isspace(string[b])) b++;
@@ -34,6 +44,11 @@ void trim(std::string &string) {
   string = (e <= b ? "" : string.substr(b,e));
 }
 
+/*
+ * Checks if a string is a legal option/param name, i.e.
+ * starts with a letter and contains only letters, numbers,
+ * '-' and '_'
+ */
 bool legal_name(const std::string name) {
   unsigned int i;
   // First must be alpha
@@ -49,7 +64,7 @@ bool legal_name(const std::string name) {
 // Public functions
 
 /* 
- * Constructor
+ * CLAP Constructor
  */
 CLAP::CLAP(const std::string info, int argc, char **argv) : exec_name(argv[0]) {
   // Split info string
@@ -188,12 +203,12 @@ CLAP::CLAP(const std::string info, int argc, char **argv) : exec_name(argv[0]) {
 }
 
 /* 
- * Destructor
+ * CLAP Destructor
  */
 CLAP::~CLAP() { }
 
 /* 
- * 
+ * Implementation of CLAP::is_set(...)
  */
 bool CLAP::is_set(const std::string name) {
   if(this->map.find(name)==this->map.end())
@@ -204,33 +219,36 @@ bool CLAP::is_set(const std::string name) {
 }
 
 /* 
- * 
+ * Implementation of CLAP::get_bool_param(...)
  */
 bool CLAP::get_bool_param(const std::string name, unsigned int index) {
   return *(bool*)this->_get_param("get_bool_param", CLAP::Type::bool_t, name, index);
 }
 
 /* 
- * 
+ * Implementation of CLAP::get_int_param(...)
  */
 int CLAP::get_int_param(const std::string name, unsigned int index) {
   return *(int*)this->_get_param("get_int_param", CLAP::Type::int_t, name, index);
 }
 
 /* 
- * 
+ * Implementation of CLAP::get_float_param(...)
  */
 float CLAP::get_float_param(const std::string name, unsigned int index) {
   return *(float*)this->_get_param("get_float_param", CLAP::Type::float_t, name, index);
 }
 
 /* 
- * 
+ * Implementation of CLAP::get_string_param(...)
  */
 std::string CLAP::get_string_param(const std::string name, unsigned int index) {
   return *(std::string*)this->_get_param("get_string_param", CLAP::Type::string_t, name, index);
 }
 
+/*
+ * Implementation of CLAP::print_help()
+ */
 void CLAP::print_help() {
   unsigned int i, j;
   std::cout << "Usage: " << this->exec_name << " [Options]";
@@ -243,18 +261,8 @@ void CLAP::print_help() {
   for(i = 0; i < this->options.size(); i++) {
     std::cout << " -" << this->options[i].short_name
 	      << "\t--" << this->options[i].name << " ";
-    for(j = 0; j < this->options[i].params.size(); j++) {
+    for(j = 0; j < this->options[i].params.size(); j++)
       std::cout << this->options[i].params[j].name << " ";
-      /*std::cout << "(";
-      switch(this->options[i].params[j].t) {
-      case CLAP::Type::int_t:    std::cout << "integer";        break;
-      case CLAP::Type::bool_t:   std::cout << "0|1";            break;
-      case CLAP::Type::float_t:  std::cout << "floating point"; break;
-      case CLAP::Type::string_t: std::cout << "string";         break;
-      default: break;
-      }
-      std::cout << "), " << std::endl;*/
-    }
     std::cout << std::endl;
   }
 }
@@ -262,12 +270,18 @@ void CLAP::print_help() {
 /////////////////////////////
 // Private functions
 
+/*
+ * Implementation of CLAP::error_usage(...)
+ */
 void CLAP::error_usage(std::string errMsg) {
   std::cout << this->exec_name << ": " << errMsg << std::endl
 	    << "Try '" << this->exec_name << " --help' for more information." << std::endl;
   exit(1);
 }
 
+/*
+ * Implementation of CLAP::clean_param(...)
+ */
 bool CLAP::clean_param(std::string &param) {
   if(param[0] == '-') {
     param = param.substr(param[1] == '-' ? 2 : 1);
@@ -277,6 +291,9 @@ bool CLAP::clean_param(std::string &param) {
   return false;
 }
 
+/*
+ * Implementation of CLAP::_get_param(...)
+ */
 void *CLAP::_get_param(const std::string fname, CLAP::Type t,
 		       const std::string pname, unsigned int index) {
   Param *p = NULL;
@@ -305,7 +322,9 @@ void *CLAP::_get_param(const std::string fname, CLAP::Type t,
   return p->val;
 }
 
-
+/*
+ * Implementation of CLAP::parse_int(...)
+ */
 bool CLAP::parse_int(std::string &arg, int &val) {
   unsigned int i = (arg[0] == '-' ? 1 : 0);
   if(arg.size() == i)
@@ -321,6 +340,9 @@ bool CLAP::parse_int(std::string &arg, int &val) {
   return true;
 }
 
+/*
+ * Implementation of CLAP::parse_bool(...)
+ */
 bool CLAP::parse_bool(std::string &arg, bool &val) {
   if(arg.length() != 1 || (arg[0] != '0' && arg[0] != '1'))
     return false;
@@ -328,6 +350,9 @@ bool CLAP::parse_bool(std::string &arg, bool &val) {
   return true;
 }
 
+/*
+ * Implementation of CLAP::parse_float(...)
+ */
 bool CLAP::parse_float(std::string &arg, float &val) {
   unsigned int i = (arg[0] == '-' ? 1 : 0);
   if(arg.size() == i)
@@ -341,6 +366,9 @@ bool CLAP::parse_float(std::string &arg, float &val) {
   return true;
 }
 
+/*
+ * CLAP::Option constructor
+ */
 CLAP::Option::Option(const std::string info) : is_set(false), do_break(false) {
   std::vector<std::string> tokens;
   unsigned int i;
@@ -367,8 +395,14 @@ CLAP::Option::Option(const std::string info) : is_set(false), do_break(false) {
   }
 }
 
+/*
+ * CLAP::Option destructor
+ */
 CLAP::Option::~Option() { }
 
+/*
+ * CLAP::Param constructor
+ */
 CLAP::Param::Param(const std::string info) {
   unsigned int l = info.length();
   this->name = info.substr(0,l-2);
@@ -386,6 +420,9 @@ CLAP::Param::Param(const std::string info) {
   this->val = NULL;
 }
 
+/*
+ * CLAP::Param destructor
+ */
 CLAP::Param::~Param() {
   if(this->val != NULL) {
     switch(this->t) {
