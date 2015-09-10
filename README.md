@@ -49,7 +49,7 @@ So one could e.g. call the program with:
 
 # Retrieving parameters
 
-CLAP supplies several functions for checking if options/parameters is set. Continuing the example from above, we may retrieve the parameters in the following way:
+CLAP supplies several functions for checking if an option/a parameter is set. Continuing the example from above, we may retrieve the parameters in the following way:
 
 ```
 int main(int argc, char* argv[]) {
