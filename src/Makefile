@@ -5,7 +5,7 @@ MAIN=test/test
 
 OBJECTS = $(subst cpp,o,$(wildcard *.cpp))
 OBJECTS+= $(subst cpp,o,$(wildcard test/*.cpp))
-OBJECTS+= $(subst cpp,o,$(wildcard clap/*/*.cpp))
+OBJECTS+= $(subst cpp,o,$(wildcard clap/*.cpp))
 
 # Add -DNDEBUG and -O2 in CFLAGS before testing
 #CFLAGS+= -O2 -DNDEBUG
