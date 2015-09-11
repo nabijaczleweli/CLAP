@@ -66,7 +66,7 @@ bool legal_name(const std::string name) {
 /* 
  * CLAP Constructor
  */
-CLAP::CLAP(const std::string info, int argc, char **argv) : exec_name(argv[0]) {
+CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(argv[0]) {
   // Split info string
   std::vector<std::string> lines;
   std::string cur;
@@ -114,13 +114,27 @@ CLAP::CLAP(const std::string info, int argc, char **argv) : exec_name(argv[0]) {
   if(i == lines.size() || lines[i] != "PARAMETERS:")
     error_setup("CLAP::CLAP - missing PARAMETERS section");
   for(i++; i < lines.size(); i++) {
-    Param p(lines[i]);
-    this->params.push_back(p);
+    std::vector<std::string> tokens;
+    tokenize(lines[i], tokens);
+    
+    // Check that the pattern is not a redefinition
+    for(j = 0; j < this->patterns.size(); j++)
+      if(this->patterns[j].size() == tokens.size())
+	error_setup("CLAP::CLAP - same pattern defined twice");
+    
+    this->patterns.push_back(std::vector<CLAP::Param>());
+    std::vector<CLAP::Param> &pattern = this->patterns.back();
+    
+    // Build pattern
+    for(j = 0; j < tokens.size(); j++) {
+      Param p(tokens[j]);
+      pattern.push_back(p);
+    }
   }
   
-  // Parse arguments
+  // Parse options
   bool do_break = false;
-  for(i = 1; i < (unsigned int)argc; i++) {
+  for(i = 1; i < argc; i++) {
     std::string arg(argv[i]);
     if(!this->clean_param(arg))
       break;
@@ -136,7 +150,7 @@ CLAP::CLAP(const std::string info, int argc, char **argv) : exec_name(argv[0]) {
       break;
     }
     n = o.params.size();
-    if(i+n >= (unsigned int)argc)
+    if(i+n >= argc)
       this->error_usage("missing parameter(s) for option '"+arg+"'");
     for(j = 0; j < n; j++) {
       Param &p = o.params[j];
@@ -166,12 +180,21 @@ CLAP::CLAP(const std::string info, int argc, char **argv) : exec_name(argv[0]) {
   }
   
   if(!do_break) {
-    if((unsigned int)argc-i < this->params.size())
-      this->error_usage("missing mandatory parameters");
+    // Detect correct pattern
+    this->sel_pattern = -1;
+    for(j = 0; j < this->patterns.size(); j++)
+      if(this->patterns[j].size() == argc-i) {
+	this->sel_pattern = j;
+	break;
+      }
+    if(this->sel_pattern == -1)
+      this->error_usage("wrong number of parameters");
+    std::vector<CLAP::Param> &params = this->patterns[this->sel_pattern];
+    
     // Parse remaining parameters
-    for(j = 0; i < (unsigned int)argc; i++, j++) {
+    for(j = 0; i < argc; i++, j++) {
       std::string param(argv[i]);
-      Param &p = this->params[j];
+      Param &p = params[j];
       switch(p.t) {
       case CLAP::Type::int_t:
 	p.val = new int();
@@ -247,14 +270,25 @@ std::string CLAP::get_string_param(const std::string name, unsigned int index) {
 }
 
 /*
+ * Implementation of CLAP::get_chosen_pattern()
+ */
+int CLAP::get_chosen_pattern() {
+  return this->sel_pattern;
+}
+
+/*
  * Implementation of CLAP::print_help()
  */
 void CLAP::print_help() {
   unsigned int i, j;
-  std::cout << "Usage: " << this->exec_name << " [Options]";
-  for(i = 0; i < this->params.size(); i++)
-    std::cout << " <" << this->params[i].name << ">";
-  std::cout << std::endl << std::endl;
+  std::cout << "Usage: " << std::endl;
+  for(i = 0; i < this->patterns.size(); i++) {
+    std::cout << " " << this->exec_name << " [Options]";
+    for(j = 0; j < this->patterns[i].size(); j++)
+      std::cout << " <" << this->patterns[i][j].name << ">";
+    std::cout << std::endl;
+  }
+  std::cout << std::endl;
   
   // Options
   std::cout << "Options:" << std::endl;
@@ -262,7 +296,7 @@ void CLAP::print_help() {
     std::cout << " -" << this->options[i].short_name
 	      << "\t--" << this->options[i].name << " ";
     for(j = 0; j < this->options[i].params.size(); j++)
-      std::cout << this->options[i].params[j].name << " ";
+      std::cout << "<" << this->options[i].params[j].name << "> ";
     std::cout << std::endl;
   }
 }
@@ -299,11 +333,14 @@ void *CLAP::_get_param(const std::string fname, CLAP::Type t,
   Param *p = NULL;
   
   if(this->map.find(pname)==this->map.end()) {
-    // Search through mandatory params
-    for(unsigned int i = 0; i < this->params.size(); i++) {
-      if(this->params[i].name == pname) {
-	p = &this->params[i];
-	break;
+    // Search through mandatory params (if no break)
+    if(this->sel_pattern != -1) {
+      std::vector<CLAP::Param> &params = this->patterns[this->sel_pattern];
+      for(unsigned int i = 0; i < params.size(); i++) {
+	if(params[i].name == pname) {
+	  p = &params[i];
+	  break;
+	}
       }
     }
     if(p == NULL)

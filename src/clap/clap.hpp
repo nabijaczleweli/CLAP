@@ -26,7 +26,7 @@ public:
    *       |  .                                                     |
    *       |  .                                                     |
    *       | PARAMETERS:                                            |
-   *       | par1:(i|f|b|s)                                         |
+   *       | par1:(i|f|b|s) [par2:(i|f|b|s)] ...                    |
    *       |  .                                                     |
    *       |  .                                                     |
    *       |  .                                                     |
@@ -38,7 +38,8 @@ public:
    * 'var1', 'var2', ... are the (optional) parameters for the option. The type follows the ':'
    * and must be either 'i' = integer, 'f' = float, 'b' = boolean, 's' = string.
    * 
-   * Mandatory parameters are defined in the PARAMETERS section.
+   * Mandatory parameters are defined in the PARAMETERS section. Here, several accepted patterns
+   * can be defined. Leave an empty line (or no lines) for no parameters.
    * 'par1' is the name of the first parameter. Again, the type is specified after the ':'.
    *
    * Both the OPTIONS and the PARAMETERS sections may be left empty.
@@ -47,7 +48,7 @@ public:
    * @param argc Size of argv array.
    * @param argv Array containing command line arguments.
    */
-  CLAP(const std::string info, int argc, char **argv);
+  CLAP(const std::string info, unsigned int argc, char **argv);
   
   /**
    * Destructor
@@ -100,6 +101,20 @@ public:
   std::string get_string_param(const std::string name, unsigned int index=0);
 
   /**
+   * Get the chosen pattern. If a break has occured, -1 is returned.
+   *
+   * @return int The chosen pattern
+   */
+  int get_chosen_pattern();
+
+  /**
+   * Prints a usage error - used when an input is somehow invalid.
+   *
+   * @param errMsg The errMsg to show the user.
+   */
+  void error_usage(std::string errMsg);
+
+  /**
    * Prints the help text.
    */
   void print_help();
@@ -114,13 +129,6 @@ private:
     float_t,
     string_t
   };
-
-  /**
-   * Prints a usage error - used when an input is invalid/unknown.
-   *
-   * @param errMsg The errMsg to show the user.
-   */
-  void error_usage(std::string errMsg);
   
   /**
    * Cleans up a input argument, e.g. removes '-' or '--'.
@@ -242,8 +250,10 @@ private:
   std::vector<Option> options;
   /** Map of the options for this program */
   std::unordered_map<std::string, unsigned int> map;
-  /** List of mandatory parameters for this program */
-  std::vector<Param> params;
+  /** Selected pattern */
+  int sel_pattern;
+  /** List of mandatory parameter patterns for this program */
+  std::vector< std::vector<Param> > patterns;
 };
 
 #endif // CLAP_CLAP_H
