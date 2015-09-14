@@ -135,12 +135,12 @@ private:
   };
   
   /**
-   * Cleans up a input argument, e.g. removes '-' or '--'.
+   * Checks if a string is an option
    * 
    * @param arg The argument to be cleaned up.
    * @return True if '-' or '--' removed, otherwise false.
    */
-  bool clean_param(std::string &arg);
+  bool is_option(std::string &arg);
 
   /**
    * Returns a void pointer to the value of the parameter.

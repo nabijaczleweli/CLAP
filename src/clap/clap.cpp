@@ -98,17 +98,18 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
   // Add default options
   CLAP::Option help("-h --help br");
   this->options.push_back(help);
-  map.insert({help.name, 0});
-  map.insert({help.short_name, 0});
+  map.insert({"--"+help.name, 0});
+  map.insert({"-"+help.short_name, 0});
   
   // Parse lines
   for(i = 1; i < lines.size() && lines[i] != "PARAMETERS:"; i++) {
     CLAP::Option o(lines[i]);
-    if(this->map.find(o.name)!=this->map.end() || this->map.find(o.short_name)!=this->map.end())
+    std::string name = "--"+o.name, short_name = "-"+o.short_name;
+    if(this->map.find(name)!=this->map.end() || this->map.find(short_name)!=this->map.end())
       error_setup("CLAP::CLAP - Same parameter defined twice ["+o.name+","+o.short_name+"]");
     this->options.push_back(o);
-    map.insert({o.name, this->options.size()-1});
-    map.insert({o.short_name, this->options.size()-1});
+    map.insert({name, this->options.size()-1});
+    map.insert({short_name, this->options.size()-1});
   }
 
   if(i == lines.size() || lines[i] != "PARAMETERS:")
@@ -136,7 +137,7 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
   bool do_break = false;
   for(i = 1; i < argc; i++) {
     std::string arg(argv[i]);
-    if(!this->clean_param(arg))
+    if(!this->is_option(arg))
       break;
     
     // Check if option is valid
@@ -238,10 +239,16 @@ CLAP::~CLAP() { }
  * Implementation of CLAP::is_set(...)
  */
 unsigned int CLAP::is_set(const std::string name) {
-  if(this->map.find(name)==this->map.end())
-    error_setup("CLAP::is_set - invalid option '"+name+"'");
+  std::string sname = "-"+name;
+  // Check for short name
+  if(this->map.find(sname)==this->map.end()) {
+    // Check for long name
+    sname = "-"+sname;
+    if(this->map.find(sname)==this->map.end())
+      error_setup("CLAP::is_set - invalid option '"+name+"'"); 
+  }
   
-  unsigned int i = this->map[name];
+  unsigned int i = this->map[sname];
   return this->options[i].is_set;
 }
 
@@ -318,12 +325,13 @@ void CLAP::error_usage(std::string errMsg) {
 }
 
 /*
- * Implementation of CLAP::clean_param(...)
+ * Implementation of CLAP::is_option(...)
  */
-bool CLAP::clean_param(std::string &param) {
+bool CLAP::is_option(std::string &param) {
+  if(param.size() < 2)
+    return false;
   if(param[0] == '-') {
-    param = param.substr(param[1] == '-' ? 2 : 1);
-    return true;
+    return legal_name(param.substr(param[1] == '-' ? 2 : 1));
   }
   // Param is mandatory or error
   return false;
@@ -338,7 +346,16 @@ void *CLAP::_get_param(const std::string fname, CLAP::Type t,
   Param *p = NULL;
   void  *v = NULL;
 
-  if(this->map.find(pname)==this->map.end()) {
+  bool is_option = true;
+  std::string sname = "-"+pname;
+  // Check for short name
+  if(this->map.find(sname)==this->map.end()) {
+    // Check for long name
+    sname = "-"+sname;
+    if(this->map.find(sname)==this->map.end())
+      is_option = false;
+  }
+  if(!is_option) {
     // Search through mandatory params (if no break)
     if(this->sel_pattern != -1) {
       std::vector<CLAP::Param> &params = this->patterns[this->sel_pattern];
@@ -355,7 +372,7 @@ void *CLAP::_get_param(const std::string fname, CLAP::Type t,
   }
   else {
     // Option found
-    Option &o = this->options[this->map[pname]];
+    Option &o = this->options[this->map[sname]];
     unsigned int k = o.params.size();
     // Check index
     if(n >= k)
