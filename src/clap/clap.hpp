@@ -60,45 +60,49 @@ public:
    * Checks if an option/parameter is set.
    *
    * @param name The name of the option/parameter
-   * @return bool True if set, otherwise false
+   * @return integer The number of times the parameter has been passed
    */
-  bool is_set(const std::string name);
+  unsigned int is_set(const std::string name);
 
   /**
    * Gets a boolean parameter of some option.
    *
    * @param name The name of the option
-   * @param index The index of the parameter of the option
+   * @param n The n'th parameter of the option
+   * @param m The m'th occurence of the option
    * @return bool The value given
    */
-  bool get_bool_param(const std::string name, unsigned int index=0);
+  bool get_bool_param(const std::string name, unsigned int n=0, unsigned int m=0);
   
   /**
    * Gets an integer parameter of some option.
    *
    * @param name The name of the option
-   * @param index The index of the parameter of the option
+   * @param n The n'th parameter of the option
+   * @param m The m'th occurence of the option
    * @return int The value given
    */
-  int get_int_param(const std::string name, unsigned int index=0);
+  int get_int_param(const std::string name, unsigned int n=0, unsigned int m=0);
   
   /**
    * Gets a floating point parameter of some option.
    *
    * @param name The name of the option
-   * @param index The index of the parameter of the option
+   * @param n The n'th parameter of the option
+   * @param m The m'th occurence of the option
    * @return float The value given
    */
-  float get_float_param(const std::string name, unsigned int index=0);
+  float get_float_param(const std::string name, unsigned int n=0, unsigned int m=0);
   
   /**
    * Gets a string parameter of some option.
    *
    * @param name The name of the option
-   * @param index The index of the parameter of the option
+   * @param n The n'th parameter of the option
+   * @param m The m'th occurence of the option
    * @return string The value given
    */
-  std::string get_string_param(const std::string name, unsigned int index=0);
+  std::string get_string_param(const std::string name, unsigned int n=0, unsigned int m=0);
 
   /**
    * Get the chosen pattern. If a break has occured, -1 is returned.
@@ -144,11 +148,13 @@ private:
    * @param fname Function name to print in error message on error.
    * @param t Expected type of value.
    * @param pname Name of the option
-   * @param index The index of the parameter of the option
+   * @param m The m'th occurence of the option 
+   * @param n The n'th parameter of the option
    * @return void* Pointer to the value of this parameter
    */
   void *_get_param(const std::string fname, CLAP::Type t,
-		   const std::string pname, unsigned int index);
+		   const std::string pname, unsigned int n,
+		   unsigned int m);
 
   /**
    * Parses an integer from a string.
@@ -203,8 +209,6 @@ private:
     std::string name;
     /** Type of the parameter */
     Type  t;
-    /** Value of the parameter, if set */
-    void *val;
   };
 
   /**
@@ -236,12 +240,14 @@ private:
     std::string name;
     /** Option short name */
     std::string short_name;
-    /** Flag indicating whether the option is set */
-    bool is_set;
+    /** Integer indicating number of times set */
+    unsigned int is_set;
     /** Flag indicating whether the option should stop the parser */
     bool do_break;
     /** List of parameters of this option */
     std::vector<Param> params;
+    /** List of arguments */
+    std::vector<void*> args;
   };
 
   /** Name of the executable */
@@ -254,6 +260,8 @@ private:
   int sel_pattern;
   /** List of mandatory parameter patterns for this program */
   std::vector< std::vector<Param> > patterns;
+  /** List of arguments */
+  std::vector<void*> args;
 };
 
 #endif // CLAP_CLAP_H

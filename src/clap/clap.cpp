@@ -144,7 +144,7 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
       this->error_usage("invalid option '"+std::string(argv[i])+"'");
     
     Option &o = this->options[this->map[arg]];
-    o.is_set = true;
+    o.is_set++;
     if(o.do_break) {
       do_break = true;
       break;
@@ -154,27 +154,29 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
       this->error_usage("missing parameter(s) for option '"+arg+"'");
     for(j = 0; j < n; j++) {
       Param &p = o.params[j];
+      void *val = NULL;
       std::string arg = argv[i+j+1];
       switch(p.t) {
       case CLAP::Type::int_t:
-	p.val = new int();
-	if(!this->parse_int(arg, *(int*)p.val))
+	val = new int();
+	if(!this->parse_int(arg, *(int*)val))
 	  this->error_usage("invalid integer argument '"+arg+"' for option '"+o.name+"' - must be an integer");
 	break;
       case CLAP::Type::bool_t:
-	p.val = new bool();
-	if(!this->parse_bool(arg, *(bool*)p.val))
+	val = new bool();
+	if(!this->parse_bool(arg, *(bool*)val))
 	  this->error_usage("invalid boolean argument '"+arg+"' for option '"+o.name+"' - must be either 0 or 1");
 	break;
       case CLAP::Type::float_t:
-	p.val = new float();
-	if(!this->parse_float(arg, *(float*)p.val))
+	val = new float();
+	if(!this->parse_float(arg, *(float*)val))
 	  this->error_usage("invalid float argument '"+arg+"' for option '"+o.name+"' - must be a floating point value");
 	break;
       case CLAP::Type::string_t:
-	p.val = new std::string(arg);
+	val = new std::string(arg);
 	break;
       }
+      o.args.push_back(val);
     }
     i += j;
   }
@@ -195,27 +197,29 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
     for(j = 0; i < argc; i++, j++) {
       std::string param(argv[i]);
       Param &p = params[j];
+      void* val = NULL;
       switch(p.t) {
       case CLAP::Type::int_t:
-	p.val = new int();
-	if(!this->parse_int(param, *(int*)p.val))
+	val = new int();
+	if(!this->parse_int(param, *(int*)val))
 	  this->error_usage("invalid integer value '"+param+"' for argument '"+p.name+"'");
 	break;
       case CLAP::Type::bool_t:
-	p.val = new bool();
-	if(!this->parse_bool(param, *(bool*)p.val))
+	val = new bool();
+	if(!this->parse_bool(param, *(bool*)val))
 	  this->error_usage("invalid boolean value '"+param+"' for argument '"+p.name+"' - must be either 0 or 1");
 	break;
       case CLAP::Type::float_t:
-	p.val = new float();
-	if(!this->parse_float(param, *(float*)p.val))
+	val = new float();
+	if(!this->parse_float(param, *(float*)val))
 	  this->error_usage("invalid float value '"+param+"' for argument '"+p.name+"'");
 	break;
       case CLAP::Type::string_t:
-	p.val = new std::string(param);
+	val = new std::string(param);
 	break;
       default: error_setup("CLAP::CLAP - Unknown type: '"+param+"'");
       }
+      this->args.push_back(val);
     }
   }
   
@@ -233,7 +237,7 @@ CLAP::~CLAP() { }
 /* 
  * Implementation of CLAP::is_set(...)
  */
-bool CLAP::is_set(const std::string name) {
+unsigned int CLAP::is_set(const std::string name) {
   if(this->map.find(name)==this->map.end())
     error_setup("CLAP::is_set - invalid option '"+name+"'");
   
@@ -244,29 +248,29 @@ bool CLAP::is_set(const std::string name) {
 /* 
  * Implementation of CLAP::get_bool_param(...)
  */
-bool CLAP::get_bool_param(const std::string name, unsigned int index) {
-  return *(bool*)this->_get_param("get_bool_param", CLAP::Type::bool_t, name, index);
+bool CLAP::get_bool_param(const std::string name, unsigned int n, unsigned int m) {
+  return *(bool*)this->_get_param("get_bool_param", CLAP::Type::bool_t, name, n, m);
 }
 
 /* 
  * Implementation of CLAP::get_int_param(...)
  */
-int CLAP::get_int_param(const std::string name, unsigned int index) {
-  return *(int*)this->_get_param("get_int_param", CLAP::Type::int_t, name, index);
+int CLAP::get_int_param(const std::string name, unsigned int n, unsigned int m) {
+  return *(int*)this->_get_param("get_int_param", CLAP::Type::int_t, name, n, m);
 }
 
 /* 
  * Implementation of CLAP::get_float_param(...)
  */
-float CLAP::get_float_param(const std::string name, unsigned int index) {
-  return *(float*)this->_get_param("get_float_param", CLAP::Type::float_t, name, index);
+float CLAP::get_float_param(const std::string name, unsigned int n, unsigned int m) {
+  return *(float*)this->_get_param("get_float_param", CLAP::Type::float_t, name, n, m);
 }
 
 /* 
  * Implementation of CLAP::get_string_param(...)
  */
-std::string CLAP::get_string_param(const std::string name, unsigned int index) {
-  return *(std::string*)this->_get_param("get_string_param", CLAP::Type::string_t, name, index);
+std::string CLAP::get_string_param(const std::string name, unsigned int n, unsigned int m) {
+  return *(std::string*)this->_get_param("get_string_param", CLAP::Type::string_t, name, n, m);
 }
 
 /*
@@ -329,9 +333,11 @@ bool CLAP::clean_param(std::string &param) {
  * Implementation of CLAP::_get_param(...)
  */
 void *CLAP::_get_param(const std::string fname, CLAP::Type t,
-		       const std::string pname, unsigned int index) {
+		       const std::string pname, unsigned int n,
+		       unsigned int m) {
   Param *p = NULL;
-  
+  void  *v = NULL;
+
   if(this->map.find(pname)==this->map.end()) {
     // Search through mandatory params (if no break)
     if(this->sel_pattern != -1) {
@@ -339,6 +345,7 @@ void *CLAP::_get_param(const std::string fname, CLAP::Type t,
       for(unsigned int i = 0; i < params.size(); i++) {
 	if(params[i].name == pname) {
 	  p = &params[i];
+	  v = this->args[i];
 	  break;
 	}
       }
@@ -349,14 +356,18 @@ void *CLAP::_get_param(const std::string fname, CLAP::Type t,
   else {
     // Option found
     Option &o = this->options[this->map[pname]];
+    unsigned int k = o.params.size();
     // Check index
-    if(index >= o.params.size())
-      error_setup("CLAP::"+fname+" - invalid index for option '"+pname+"'");
-    p = &o.params[index];
+    if(n >= k)
+      error_setup("CLAP::"+fname+" - invalid n for option '"+pname+"'");
+    if(m >= o.is_set)
+      error_setup("CLAP::"+fname+" - invalid m for option '"+pname+"'");
+    p = &o.params[n];
+    v = o.args[m*k+n];
   }
   if(p->t != t)
     error_setup("CLAP::"+fname+" - wrong type");
-  return p->val;
+  return v;
 }
 
 /*
@@ -406,7 +417,7 @@ bool CLAP::parse_float(std::string &arg, float &val) {
 /*
  * CLAP::Option constructor
  */
-CLAP::Option::Option(const std::string info) : is_set(false), do_break(false) {
+CLAP::Option::Option(const std::string info) : is_set(0), do_break(false) {
   std::vector<std::string> tokens;
   unsigned int i;
   tokenize(info, tokens);
@@ -435,7 +446,26 @@ CLAP::Option::Option(const std::string info) : is_set(false), do_break(false) {
 /*
  * CLAP::Option destructor
  */
-CLAP::Option::~Option() { }
+CLAP::Option::~Option() {
+  for(unsigned int i = 0; i < this->args.size(); i++) {
+    if(this->args[i] != NULL) {
+      switch(this->params[i].t) {
+      case CLAP::Type::int_t:
+	delete (int*)this->args[i];
+	break;
+      case CLAP::Type::bool_t:
+	delete (bool*)this->args[i];
+	break;
+      case CLAP::Type::float_t:
+	delete (float*)this->args[i];
+	break;
+      case CLAP::Type::string_t:
+	delete (std::string*)this->args[i];
+	break;
+      }
+    }
+  }
+}
 
 /*
  * CLAP::Param constructor
@@ -454,27 +484,9 @@ CLAP::Param::Param(const std::string info) {
   case 's': this->t = CLAP::Type::string_t; break;
   default: error_setup("Param::Param - Unknown type: '"+info+"'");
   }
-  this->val = NULL;
 }
 
 /*
  * CLAP::Param destructor
  */
-CLAP::Param::~Param() {
-  if(this->val != NULL) {
-    switch(this->t) {
-    case CLAP::Type::int_t:
-      delete (int*)this->val;
-      break;
-    case CLAP::Type::bool_t:
-      delete (bool*)this->val;
-      break;
-    case CLAP::Type::float_t:
-      delete (float*)this->val;
-      break;
-    case CLAP::Type::string_t:
-      delete (std::string*)this->val;
-      break;
-    }
-  }
-}
+CLAP::Param::~Param() { }
