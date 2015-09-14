@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
     "-k --kernel n:i err:s \n"
     "-b --bool   bo:s      \n"
     "PARAMETERS:           \n"
-    //"                      \n"
+    "                      \n"
     "num_threads:i         \n"
     "my_name:s over_18:b   \n";
   // i = integer, f = floating point, b = boolean, s = string
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
   
   std::cout << "Chosen pattern: " << c.get_chosen_pattern() << std::endl;
 
-  if(c.get_chosen_pattern() == 0)
+  if(c.get_chosen_pattern() == 1)
     std::cout << "Number of kernels: " << c.get_int_param("num_threads") << std::endl;
 
   return 0;

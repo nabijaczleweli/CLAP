@@ -39,9 +39,9 @@ void error_setup(const std::string errMsg) {
  */
 void trim(std::string &string) {
   unsigned int b = 0, e = string.length();
-  while(isspace(string[b])) b++;
-  while(isspace(string[e-1])) e--;
-  string = (e <= b ? "" : string.substr(b,e));
+  while(b < e && isspace(string[b])) b++;
+  while(e > b && isspace(string[e-1])) e--;
+  string = (e == b ? "" : string.substr(b,e));
 }
 
 /*
@@ -85,7 +85,7 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
     trim(cur);
     lines.push_back(cur);
   }
-
+  
   // Only use the name part of exec_name
   i = this->exec_name.length()-1;
   while(i >= 0 && this->exec_name[i] != '/') {i--;}
