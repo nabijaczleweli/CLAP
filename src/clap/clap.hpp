@@ -112,13 +112,6 @@ public:
   int get_chosen_pattern();
 
   /**
-   * Prints a usage error - used when an input is somehow invalid.
-   *
-   * @param errMsg The errMsg to show the user.
-   */
-  void error_usage(std::string errMsg);
-
-  /**
    * Prints the help text.
    */
   void print_help();
@@ -157,33 +150,6 @@ private:
 		   unsigned int m);
 
   /**
-   * Parses an integer from a string.
-   *
-   * @param arg The input string
-   * @param val Reference, where the result is stored
-   * @return True if arg contains an integer, otherwise false
-   */
-  bool parse_int(std::string &arg, int &val);
-
-  /**
-   * Parses a boolean from a string.
-   *
-   * @param arg The input string
-   * @param val Reference, where the result is stored
-   * @return True if arg contains a boolean, otherwise false
-   */
-  bool parse_bool(std::string &arg, bool &val);
-
-  /**
-   * Parses a float from a string.
-   *
-   * @param arg The input string
-   * @param val Reference, where the result is stored
-   * @return True if arg contains a float, otherwise false
-   */
-  bool parse_float(std::string &arg, float &val);
-
-  /**
    * @struct CLAP::Param
    *
    * Models parameters in CLAP
@@ -209,6 +175,60 @@ private:
     std::string name;
     /** Type of the parameter */
     Type  t;
+  };
+
+  /**
+   * @struct Value
+   *
+   * Models values in CLAP
+   */
+  struct Value {
+    /**
+     * Constructor for CLAP::Value. Sets the type and value,
+     * parsed from the given param string.
+     *
+     * @param t The type of this value.
+     * @param param The input parameter.
+     */
+    Value(Type &t, std::string &param);
+    
+    /**
+     * Copy constructor for CLAP::Value
+     *
+     * @param other The other value.
+     */
+    Value(const Value &other);
+    
+    /**
+     * Destructor for value
+     */
+    ~Value();
+    
+    /**
+     * Parses an integer from a string.
+     *
+     * @param arg The input string
+     */
+    void parse_int(std::string &arg);
+
+    /**
+     * Parses a boolean from a string.
+     *
+     * @param arg The input string
+     */
+    void parse_bool(std::string &arg);
+
+    /**
+     * Parses a float from a string.
+     *
+     * @param arg The input string
+     */
+    void parse_float(std::string &arg);
+
+    /** Holds the type of this value */
+    Type t;
+    /** Holds the actual value */
+    void *val;
   };
 
   /**
@@ -247,7 +267,51 @@ private:
     /** List of parameters of this option */
     std::vector<Param> params;
     /** List of arguments */
-    std::vector<void*> args;
+    std::vector<Value> args;
+  };
+
+  /**
+   * @struct InputError
+   *
+   * Represents internal input errors in CLAP.
+   */
+  struct InputError {
+    /**
+     * Constructor
+     *
+     * @param msg The error message
+     */
+    InputError(std::string msg);
+    
+    /**
+     * Destructor
+     */
+    ~InputError();
+    
+    /** Error message */
+    std::string msg;
+  };
+  
+  /**
+   * @struct SetupError
+   *
+   * Represents internal setup errors in CLAP.
+   */
+  struct SetupError {
+    /**
+     * Constructor
+     *
+     * @param msg The error message
+     */
+    SetupError(std::string msg);
+    
+    /**
+     * Destructor
+     */
+    ~SetupError();
+    
+    /** Error message */
+    std::string msg;
   };
 
   /** Name of the executable */
@@ -261,7 +325,7 @@ private:
   /** List of mandatory parameter patterns for this program */
   std::vector< std::vector<Param> > patterns;
   /** List of arguments */
-  std::vector<void*> args;
+  std::vector<Value> args;
 };
 
 #endif // CLAP_CLAP_H
