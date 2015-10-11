@@ -178,9 +178,7 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
     }
   }
   catch(InputError ie) {
-    std::cerr << this->exec_name << ": " << ie.msg << std::endl
-	      << "Try '" << this->exec_name << " --help' for more information." << std::endl;
-    throw 1;
+    this->error_usage(ie.msg);
   }
   catch(SetupError se) { std::cerr << se.msg << std::endl; throw 2; }
 
@@ -273,6 +271,16 @@ void CLAP::print_help() {
     std::cout << std::endl;
   }
 }
+
+/**
+ * Implementation of CLAP::error_usage(...)
+ */
+void CLAP::error_usage(std::string msg) {
+  std::cerr << this->exec_name << ": " << msg << std::endl
+	    << "Try '" << this->exec_name << " --help' for more information." << std::endl;
+  throw 1;
+}
+  
 
 /////////////////////////////
 // Private functions

@@ -115,6 +115,12 @@ public:
    * Prints the help text.
    */
   void print_help();
+
+  /**
+   * Prints a usage error
+   */
+  void error_usage(std::string msg);
+  
 protected:
 private:
   /**
