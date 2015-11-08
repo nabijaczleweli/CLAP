@@ -288,12 +288,25 @@ void CLAP::print_help() {
     std::cout << std::endl;
   }
   std::cout << std::endl;
-  if(desc.length() > 0)
-    std::cout << this->desc << std::endl << std::endl;
+
+  unsigned int max_width = USAGE_LINE_MAX_LENGTH;
+  if(desc.length() > 0) {
+    // Add desc
+    std::string desc = this->desc;
+    while(desc.length() > max_width) {
+      for(j = max_width; j > 0; j--) {
+	if(isspace(desc[j])) break;
+      }
+      j = j == 0 ? max_width : j;
+      std::cout << desc.substr(0, j) << std::endl;
+      desc = desc.substr(j+1);
+    }
+    std::cout << desc << std::endl;
+  }
   
   // Options
   std::cout << "Options:" << std::endl;
-  unsigned int l1 = 0, l2 = 0, l3 = 0, t, max_width = USAGE_LINE_MAX_LENGTH;
+  unsigned int l1 = 0, l2 = 0, l3 = 0, t;
   for(i = 0; i < this->options.size(); i++) {
     l1 = l1 > this->options[i].short_name.length() ? l1 : this->options[i].short_name.length();
     l2 = l2 > this->options[i].name.length() ? l2 : this->options[i].name.length();
@@ -307,6 +320,7 @@ void CLAP::print_help() {
   l3 += l2;
   
   max_width = max_width > l3+USAGE_MIN_DESC_WIDTH ? max_width : l3+USAGE_MIN_DESC_WIDTH;
+  
   for(i = 0; i < this->options.size(); i++) {
     std::string line = " -"+this->options[i].short_name+"  ";
     while(line.length() < l1) line += " ";
@@ -319,12 +333,12 @@ void CLAP::print_help() {
     // Add desc
     std::string desc = this->options[i].desc;
     while(l3+desc.length() > max_width) {
-      for(j = max_width-l3-1; j >= 0; j--) {
+      for(j = max_width-l3-1; j > 0; j--) {
 	if(isspace(desc[j])) break;
       }
       j = j == 0 ? max_width-l3-1 : j;
       line += desc.substr(0, j)+"\n";
-      desc = desc.substr(j);
+      desc = desc.substr(j+1);
       for(j = 0; j < l3-1; j++) line += " ";
     }
     line += desc;
