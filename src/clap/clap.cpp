@@ -347,7 +347,7 @@ void CLAP::print_help() {
       j = j == 0 ? max_width-l3-1 : j;
       line += desc.substr(0, j)+"\n";
       desc = desc.substr(j+1);
-      for(j = 0; j < l3-1; j++) line += " ";
+      for(j = 0; j < l3; j++) line += " ";
     }
     line += desc;
     std::cout << line << std::endl;
