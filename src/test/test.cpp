@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
       "  Try it out...                    \n"
       "OPTIONS:                           \n"
       "-v --version br        'print version' \n"
-      "-k --kernel n:i err:s  'Set kernel and error message' \n"
+      "-k --kernel n:i err:s  'Set kernel and error message. Lorem ipsu some text hello hello hello' \n"
       "-b --bool   bo:s       ''          \n"
       "PARAMETERS:                        \n"
       "                                   \n"

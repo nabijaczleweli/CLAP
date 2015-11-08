@@ -4,6 +4,11 @@
 #include "clap.hpp"
 
 /////////////////////////////
+// Config
+#define USAGE_LINE_MAX_LENGTH 100
+#define USAGE_MIN_DESC_WIDTH   15
+
+/////////////////////////////
 // Helper functions
 
 /*
@@ -288,7 +293,7 @@ void CLAP::print_help() {
   
   // Options
   std::cout << "Options:" << std::endl;
-  unsigned int l1 = 0, l2 = 0, l3 = 0, t;
+  unsigned int l1 = 0, l2 = 0, l3 = 0, t, max_width = USAGE_LINE_MAX_LENGTH;
   for(i = 0; i < this->options.size(); i++) {
     l1 = l1 > this->options[i].short_name.length() ? l1 : this->options[i].short_name.length();
     l2 = l2 > this->options[i].name.length() ? l2 : this->options[i].name.length();
@@ -300,6 +305,8 @@ void CLAP::print_help() {
   l1 += 4;
   l2 += 4+l1;
   l3 += l2;
+  
+  max_width = max_width > l3+USAGE_MIN_DESC_WIDTH ? max_width : l3+USAGE_MIN_DESC_WIDTH;
   for(i = 0; i < this->options.size(); i++) {
     std::string line = " -"+this->options[i].short_name+"  ";
     while(line.length() < l1) line += " ";
@@ -308,7 +315,19 @@ void CLAP::print_help() {
     for(j = 0; j < this->options[i].params.size(); j++)
       line += this->options[i].params[j].name+" ";
     while(line.length() < l3) line += " ";
-    line += "  "+this->options[i].desc;
+    
+    // Add desc
+    std::string desc = this->options[i].desc;
+    while(l3+desc.length() > max_width) {
+      for(j = max_width-l3-1; j >= 0; j--) {
+	if(isspace(desc[j])) break;
+      }
+      j = j == 0 ? max_width-l3-1 : j;
+      line += desc.substr(0, j)+"\n";
+      desc = desc.substr(j);
+      for(j = 0; j < l3-1; j++) line += " ";
+    }
+    line += desc;
     std::cout << line << std::endl;
   }
 }
