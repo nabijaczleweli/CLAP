@@ -290,16 +290,24 @@ void CLAP::print_help() {
   std::cout << std::endl;
 
   unsigned int max_width = USAGE_LINE_MAX_LENGTH;
-  if(desc.length() > 0) {
+  if(this->desc.length() > 0) {
     // Add desc
     std::string desc = this->desc;
     while(desc.length() > max_width) {
-      for(j = max_width; j > 0; j--) {
-	if(isspace(desc[j])) break;
+      for(j = 0; j < desc.length(); j++)
+	if(desc[j] == '\n') {
+	  std::cout << desc.substr(0,j) << std::endl;
+	  desc = desc.substr(j+1);
+	}
+      
+      if(desc.length() > max_width) {
+	for(j = max_width; j > 0; j--) {
+	  if(isspace(desc[j])) break;
+	}
+	j = j == 0 ? max_width : j;
+	std::cout << desc.substr(0,j) << std::endl;
+	desc = desc.substr(j+1);
       }
-      j = j == 0 ? max_width : j;
-      std::cout << desc.substr(0, j) << std::endl;
-      desc = desc.substr(j+1);
     }
     std::cout << desc << std::endl;
   }
