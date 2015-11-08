@@ -309,7 +309,7 @@ void CLAP::print_help() {
 	desc = desc.substr(j+1);
       }
     }
-    std::cout << desc << std::endl;
+    std::cout << desc << std::endl << std::endl;
   }
   
   // Options
