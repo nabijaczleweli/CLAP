@@ -12,8 +12,24 @@
 void tokenize(const std::string string, std::vector<std::string> &tokens) {
   std::string cur("");
   unsigned int i;
+  bool str = false;
   for(i = 0; string[i]; i++) {
-    if(isspace(string[i])) {
+    if(string[i] == '\'') {
+      if(str) {
+	cur += "'";
+	tokens.push_back(cur);
+	cur = "";
+      }
+      else {
+	if(cur.length() > 0)
+	  tokens.push_back(cur);
+	cur = "'";
+      }
+      str = !str;
+    }
+    else if(str)
+      cur += string[i];
+    else if(isspace(string[i])) {
       if(cur.length() > 0)
 	tokens.push_back(cur);
       cur = "";
@@ -57,7 +73,7 @@ bool legal_name(const std::string name) {
 /* 
  * CLAP Constructor
  */
-CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(argv[0]) {
+CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(argv[0]), desc("") {
   try {
     // Split info string
     std::vector<std::string> lines;
@@ -83,18 +99,25 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
     while(i >= 0 && this->exec_name[i] != '/') {i--;}
     this->exec_name = this->exec_name.substr(i+1);
   
+    // Build description
+    if(lines[0] == "DESCRIPTION:") {
+      this->desc = "";
+      for(i = 1; i < lines.size() && lines[i] != "OPTIONS:"; i++)
+	this->desc += (i==1?"":"\n") + lines[i];
+    }
+
     // Check first line is correct
-    if(lines[0] != "OPTIONS:")
+    if(i == lines.size())
       throw SetupError("CLAP::CLAP - missing OPTIONS section");
 
     // Add default options
-    CLAP::Option help("-h --help br");
+    CLAP::Option help("-h --help br 'Prints this help'");
     this->options.push_back(help);
     map.insert({"--"+help.name, 0});
     map.insert({"-"+help.short_name, 0});
   
     // Parse lines
-    for(i = 1; i < lines.size() && lines[i] != "PARAMETERS:"; i++) {
+    for(i++; i < lines.size() && lines[i] != "PARAMETERS:"; i++) {
       CLAP::Option o(lines[i]);
       std::string name = "--"+o.name, short_name = "-"+o.short_name;
       if(this->map.find(name)!=this->map.end() || this->map.find(short_name)!=this->map.end())
@@ -124,7 +147,7 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
 	pattern.push_back(p);
       }
     }
-  
+    
     // Parse options
     bool do_break = false;
     for(i = 1; i < argc; i++) {
@@ -260,15 +283,33 @@ void CLAP::print_help() {
     std::cout << std::endl;
   }
   std::cout << std::endl;
+  if(desc.length() > 0)
+    std::cout << this->desc << std::endl << std::endl;
   
   // Options
   std::cout << "Options:" << std::endl;
+  unsigned int l1 = 0, l2 = 0, l3 = 0, t;
   for(i = 0; i < this->options.size(); i++) {
-    std::cout << " -" << this->options[i].short_name
-	      << "\t--" << this->options[i].name << " ";
+    l1 = l1 > this->options[i].short_name.length() ? l1 : this->options[i].short_name.length();
+    l2 = l2 > this->options[i].name.length() ? l2 : this->options[i].name.length();
+    t = 0;
     for(j = 0; j < this->options[i].params.size(); j++)
-      std::cout << "<" << this->options[i].params[j].name << "> ";
-    std::cout << std::endl;
+      t += this->options[i].params[j].name.length()+2;
+    l3 = l3 > t ? l3 : t;
+  }
+  l1 += 4;
+  l2 += 4+l1;
+  l3 += l2;
+  for(i = 0; i < this->options.size(); i++) {
+    std::string line = " -"+this->options[i].short_name+"  ";
+    while(line.length() < l1) line += " ";
+    line += "--"+this->options[i].name+"  ";
+    while(line.length() < l2) line += " ";
+    for(j = 0; j < this->options[i].params.size(); j++)
+      line += this->options[i].params[j].name+" ";
+    while(line.length() < l3) line += " ";
+    line += "  "+this->options[i].desc;
+    std::cout << line << std::endl;
   }
 }
 
@@ -355,9 +396,9 @@ CLAP::Option::Option(const std::string info) : is_set(0), do_break(false) {
   std::vector<std::string> tokens;
   unsigned int i;
   tokenize(info, tokens);
-  if(tokens.size() < 2)
-    throw SetupError("Option::Option - missing long name");
-
+  if(tokens.size() < 3)
+    throw SetupError("Option::Option - missing parameter");
+  
   if(tokens[0].length() < 2 || tokens[0][0] != '-' || !legal_name(tokens[0].substr(1)))
     throw SetupError("Option::Option - error in short name '"+tokens[0]+"'");
   if(tokens[1].length() < 3 || tokens[1][0] != '-'
@@ -367,14 +408,18 @@ CLAP::Option::Option(const std::string info) : is_set(0), do_break(false) {
   this->name       = tokens[1].substr(2);
   
   i = 2;
-  if(tokens.size() > 2 && tokens[2] == "br") {
+  if(tokens.size() > 3 && tokens[2] == "br") {
     this->do_break = true;
     i++;
   }
-  for(; i < tokens.size(); i++) {
+  for(; i < tokens.size()-1; i++) {
     CLAP::Param p(tokens[i]);
     this->params.push_back(p);
   }
+  std::string &desc = tokens[i];
+  if(desc.length() < 2 || desc[0] != '\'' || desc[desc.length()-1] != '\'')
+    throw SetupError("Option::Option - error in description format - missing ' delimiters");
+  this->desc = desc.substr(1,desc.length()-2);
 }
 
 /*

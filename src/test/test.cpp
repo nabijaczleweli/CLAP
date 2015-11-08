@@ -6,14 +6,17 @@
 int main(int argc, char *argv[]) {
   try {
     const std::string info =
-      "OPTIONS:              \n"
-      "-v --version br       \n"
-      "-k --kernel n:i err:s \n"
-      "-b --bool   bo:s      \n"
-      "PARAMETERS:           \n"
-      "                      \n"
-      "num_threads:i         \n"
-      "my_name:s over_18:b   \n";
+      "DESCRIPTION:                       \n"
+      "This is a test of the CLAP library.\n"
+      "  Try it out...                    \n"
+      "OPTIONS:                           \n"
+      "-v --version br        'print version' \n"
+      "-k --kernel n:i err:s  'Set kernel and error message' \n"
+      "-b --bool   bo:s       ''          \n"
+      "PARAMETERS:                        \n"
+      "                                   \n"
+      "num_threads:i                      \n"
+      "my_name:s over_18:b                \n";
     // i = integer, f = floating point, b = boolean, s = string
 
     CLAP c(info, argc, argv); 

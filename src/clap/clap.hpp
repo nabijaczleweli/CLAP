@@ -266,6 +266,8 @@ private:
     std::string name;
     /** Option short name */
     std::string short_name;
+    /** Description of this option */
+    std::string desc;
     /** Integer indicating number of times set */
     unsigned int is_set;
     /** Flag indicating whether the option should stop the parser */
@@ -322,6 +324,8 @@ private:
 
   /** Name of the executable */
   std::string exec_name;
+  /** Description of executable*/
+  std::string desc;
   /** List of the available options for this program */
   std::vector<Option> options;
   /** Map of the options for this program */
