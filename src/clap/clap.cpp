@@ -101,7 +101,7 @@ CLAP::CLAP(const std::string info, unsigned int argc, char **argv) : exec_name(a
   
     // Only use the name part of exec_name
     i = this->exec_name.length()-1;
-    while(i >= 0 && this->exec_name[i] != '/') {i--;}
+    while(this->exec_name[i] != '/') {i--;}
     this->exec_name = this->exec_name.substr(i+1);
   
     // Build description
