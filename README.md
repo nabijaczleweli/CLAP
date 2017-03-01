@@ -9,13 +9,13 @@ A configuration string is given in to the class constructor together with the ar
 
 To use CLAP, construct an instance of the CLAP class, like so:
 
-```
+```cpp
 int main(int argc, char* argv[]) {
-    ...
+    // ...
     CLAP c(info, argc, argv);
-    ...
+    // ...
 }
-``` 
+```
 
 The configuration string must be formatted as follows:
 
@@ -51,22 +51,22 @@ So one could e.g. call the program with:
 
 CLAP supplies several functions for checking if an option/a parameter is set. Continuing the example from above, we may retrieve the parameters in the following way:
 
-```
+```cpp
 int main(int argc, char* argv[]) {
-    ...
+    // ...
     CLAP c(info, argc, argv);
-    ...
+    // ...
     if(c.is_set("v")) {
        // Print version here...
        exit(0);
     }
-    
+
     if(c.is_set("l")) {
         int lvl          = c.get_int_param("l", 0);
-	std::string file = c.get_string_param("l", 1);
-	// Configure log here...
+        std::string file = c.get_string_param("l", 1);
+        // Configure log here...
     }
-    
+
     // Mandatory parameters guaranteed to be set if no
     // breaking option is set.
     int direction = c.get_int_param("direction");
